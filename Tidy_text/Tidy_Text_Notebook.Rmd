@@ -3,13 +3,16 @@ title: "Tidy Text Notebook"
 author: "Sean Nguyen"
 subtitle: By David Robinson and Julia Silge
 output:
-  html_document: default
+  html_document:
+    df_print: paged
+    theme: flatly
   html_notebook: default
+  pdf_document: default
 ---
 
 This is my notebook that I will used to go through the tidy text notebook by Julia Silge and David Robinson. 
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(tidytext)
 library(stringr)
@@ -326,6 +329,27 @@ tidy_books %>%
 ```
 
 Looking at Units Beyond Just Words
+```{r}
+PandP_sentences <-  data_frame(text = prideprejudice) %>% 
+  unnest_tokens(sentence, text, token = "sentences")
+```
+
+```{r}
+PandP_sentences$sentence[2]
+```
+Figuring out how many chapters are in a book
+```{r}
+austen_chapters <- austen_books() %>% 
+  group_by(book) %>% 
+  unnest_tokens(chapter, text , token = "regex",
+                pattern = "Chapter|CHAPTER [\\dIVXLC]") %>% 
+  ungroup()
+
+
+austen_chapters %>% 
+  group_by(book) %>% 
+  summarise(chapters = n())
+```
 
 
 ```{r}
@@ -537,3 +561,109 @@ ggplot(plot_physics, aes(word, tf_idf, fill = author)) +
 ```
 
 # Chapter 4 Relationships Between Words: N-grams and Correlations
+
+```{r}
+austen_bigrams <- austen_books() %>% 
+  unnest_tokens(bigram, text, token = "ngrams", n = 2)
+
+austen_bigrams
+
+```
+Counting and Filtering N-grams
+```{r}
+austen_bigrams %>% 
+  count(bigram, sort = TRUE)
+```
+
+```{r}
+bigrams_separated <-  austen_bigrams %>% 
+  separate(bigram, into = c("word1", "word2"), sep = " ")
+  
+bigrams_filtered <- bigrams_separated %>% 
+  filter(!word1 %in% stop_words$word) %>% 
+  filter(!word2 %in% stop_words$word)
+
+
+bigram_counts <- bigrams_filtered %>% 
+  count(word1, word2, sort = TRUE)
+
+bigram_counts
+```
+
+```{r}
+bigrams_united <- bigrams_filtered %>% 
+  unite(bigram, word1, word2, sep = " ")
+
+bigrams_united
+```
+
+```{r}
+
+austen_books() %>% 
+  unnest_tokens(trigram, text, token = "ngrams", n = 3) %>% 
+  separate(trigram, into = c("word1", "word2", "word3"), sep = " ") %>% 
+  filter(!word1 %in% stop_words$word,
+         !word2 %in% stop_words$word,
+         !word3 %in% stop_words$word) %>% 
+  count(word1, word2, word3, sort = TRUE)
+```
+
+###Analyzing Bigrams
+
+Identifying the "streets" in each book.
+
+```{r}
+bigrams_filtered %>% 
+  filter(word2 == "street") %>% 
+  count(book, word1, sort = TRUE)
+```
+
+```{r}
+bigram_tf_idf <- bigrams_united %>% 
+  count(book, bigram) %>% 
+  bind_tf_idf(bigram, book, n) %>% 
+  arrange(desc(tf_idf))
+
+bigram_tf_idf 
+```
+
+The 12 bigrams with the highest tf-idf from each Jane Austen novel.
+```{r}
+bigram_tf_idf %>% 
+  arrange(desc(tf_idf)) %>% 
+  mutate(bigram = factor(bigram, levels = rev(unique(bigram)))) %>% 
+  group_by(book) %>% 
+  top_n(12,tf_idf) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = bigram, y = tf_idf, fill = book))+
+    geom_col(show.legend = FALSE) +
+    facet_wrap(~book, ncol = 2, scales = "free")+
+    coord_flip()
+
+```
+Using Bigrams to Provide Context in Sentiment Analysis
+```{r}
+bigrams_separated %>% 
+  filter(word1 == "not") %>% 
+  count(word1, word2, sort = TRUE)
+```
+
+```{r}
+AFINN <- get_sentiments("afinn") 
+
+AFINN
+```
+
+```{r}
+not_words <- bigrams_separated %>% 
+  rename(word = word2) %>% 
+  filter(word1 == "not") %>% 
+  inner_join(AFINN) %>% 
+  count(word, score, sort = TRUE) %>% 
+  ungroup()
+    
+    
+not_words
+  
+```
+
