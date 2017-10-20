@@ -54,3 +54,14 @@ model %>% evaluate(x_test, y_test)
 
 
 model %>% predict_classes(x_test)
+
+tensor_history <- model %>%
+  fit(
+    x_train, y_train,
+    batch_size = batch_size,
+    epochs = epochs,
+    verbose = 1, 
+    callbacks = callback_tensorboard("logs/run_a"),
+    validation_split = 0.2)
+
+tensorboard("logs/run_a")
