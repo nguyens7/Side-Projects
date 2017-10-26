@@ -46,7 +46,6 @@ history <- model %>% fit(
 )
 
 
-
 plot(history)
 
 
@@ -55,11 +54,15 @@ model %>% evaluate(x_test, y_test)
 
 model %>% predict_classes(x_test)
 
+
+history_df <- as.data.frame(history)
+str(history_df)
+
 tensor_history <- model %>%
   fit(
     x_train, y_train,
-    batch_size = batch_size,
-    epochs = epochs,
+    batch_size = 128,
+    epochs = 30,
     verbose = 1, 
     callbacks = callback_tensorboard("logs/run_a"),
     validation_split = 0.2)

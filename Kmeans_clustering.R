@@ -62,7 +62,7 @@ data <- "https://assets.datacamp.com/production/course_1815/datasets/WisconsinCa
 cancer <- read_csv(data)
 
 cancer_matrix <- cancer %>% 
-  select(-X33, -diagnosis, -contains("_se")) %>% 
+  select(-X33, -diagnosis, -contains("_se"), -contains("_worst")) %>% 
   remove_rownames() %>% 
   column_to_rownames(var = "id") %>% 
   as.matrix()
@@ -71,6 +71,8 @@ cancer_PCA <- prcomp(cancer_matrix, scale = TRUE)
 
 cancer_PCA_df <- as.data.frame(cancer_PCA$rotation)
 cancer_PCA_df$id <- row.names(cancer_PCA_df)
+
+cancer_PCA_df
 
 cancer_PCA_df
 
@@ -90,23 +92,20 @@ fviz_pca_ind(cancer_PCA,
 
 fviz_pca_var(cancer_PCA,
              col.var = "contrib", # Color by contributions to the PC
+             geom.ind = c("point"),  # "text"
              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
              repel = TRUE)     # Avoid text overlapping
 
 
 fviz_pca_biplot(cancer_PCA, repel = TRUE,
                 col.var = "#2E9FDF", # Variables color
+                geom.ind = c("point"),  # "text"
                 col.ind = "#696969")  # Individuals color
 
 
-autoplot(scale(cancer_matrix))
-
-cancer_test <-  cancer %>%
-   select(-X33) %>% 
-    mutate_at(vars(diagnosis),as.factor)
- 
 
 #  USArrests --------------------------------------------------------------
+
 
 USArrests
  
