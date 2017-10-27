@@ -667,3 +667,172 @@ not_words
   
 ```
 
+
+
+The 20 sords followed by "not" that had the greatest contribution to sentiment scores, in either a postivie or negative direction.
+```{r}
+not_words %>% 
+  mutate(contribution = n * score) %>% 
+  arrange(desc(abs(contribution))) %>% 
+  head(20) %>% 
+  mutate(word = reorder(word, contribution)) %>% 
+  ggplot(aes(word, n * score, fill = n * score > 0)) +
+  geom_col(show.legend = FALSE) +
+  xlab("Words preceded by \"not\"") +
+  ylab("Sentiment score * number of occurences") +
+  coord_flip()
+```
+
+```{r}
+negation_words <- c("not", "no", "never", "without")
+
+negated_words <- bigrams_separated %>% 
+  filter(word1 %in% negation_words) %>% 
+  inner_join(AFINN, by = c(word2 = "word")) %>% 
+  count(word1, word2, sort = TRUE) %>% 
+  ungroup()
+
+
+
+negated_words %>% 
+  inner_join(not_words) %>% 
+  mutate(contribution = n * score) %>% 
+  arrange(desc(abs(contribution))) %>% 
+  head(12) %>% 
+  mutate(word = reorder(word, contribution)) %>% 
+  ggplot(aes(word, n * score, fill = n * score > 0)) +
+  geom_col(show.legend = FALSE) +
+  xlab("Words preceded by \"not\"") +
+  ylab("Sentiment score * number of occurences") +
+  coord_flip() +
+  facet_wrap(~word1)
+```
+
+
+Analyzing networks with igraph.
+
+Create an igraph object from tidy data using the 'graph_from_data_frame()' function, which takes a data frame of edges with columns for "from", "to" and edge attributes (in this case n).
+
+```{r}
+library(igraph)
+
+bigram_counts
+
+
+bigram_graph <- bigram_counts %>% 
+  filter(n > 20) %>% 
+  graph_from_data_frame()
+
+bigram_graph
+  
+```
+
+Commone bigrams in Pride and Prejudice, showing those that occurred more thatn 20 times and where neighter word was a stop word
+```{r}
+library(ggraph)
+
+set.seed(2017)
+
+ggraph(bigram_graph, layout = "fr") +
+  geom_edge_link() +
+  geom_node_point() +
+  geom_node_text(aes(label = name), vjust = 1, hjust = 1)
+
+
+```
+Common bigrams in Pride and Prejudice, with some polishing
+```{r}
+set.seed(2016)
+
+
+a <- grid::arrow(type = "closed", length = unit(.15, "inches"))
+
+ggraph(bigram_graph, layout = "fr") +
+  geom_edge_link(aes(edge_alpha = n), show.legend = FALSE,
+                 arrow = a, end_cap = circle(.07, 'inches')) +
+  geom_node_point(color = "lightblue", size = 5) +
+  geom_node_text(aes(label = name), vjust = 1, hjust = 1) +
+  theme_void()
+
+
+
+```
+
+#Topicmodels package
+```{r}
+library(tm)
+
+data("AssociatedPress", package = "topicmodels")
+
+AssociatedPress
+```
+
+```{r}
+terms <- Terms(AssociatedPress)
+head(terms)
+```
+
+```{r}
+# library(tidyverse)
+# library(tidytext)
+
+ap_td <- tidy(AssociatedPress)
+ap_td
+```
+
+```{r}
+ap_sentiments <- ap_td %>% 
+  inner_join(get_sentiments("bing"), by = c( term = "word"))
+
+
+ap_sentiments
+```
+
+```{r}
+# ggplot2
+
+ap_sentiments %>% 
+  count(sentiment, term, wt = count) %>% 
+  ungroup() %>% 
+  filter(n>= 200) %>% 
+  mutate(n = ifelse(sentiment == "negative", -n, n)) %>% 
+  mutate(term = reorder(term, n)) %>% 
+  ggplot(aes(term, n, fill = sentiment)) +
+  geom_col() +
+  ylab("Contribution to sentiment") +
+  coord_flip()
+```
+
+```{r}
+library(methods)
+
+data("data_corpus_inaugural", package = "quanteda")
+inaug_dfm <- quanteda::dfm(data_corpus_inaugural, verbose = FALSE)
+
+inaug_dfm
+```
+
+```{r}
+inaug_td <- tidy(inaug_dfm)
+inaug_td
+```
+
+```{r}
+
+inaug_tf_idf <- inaug_td %>%
+  bind_tf_idf(term, document, count) %>% 
+  arrange(desc(tf_idf))
+
+inaug_tf_idf
+  
+```
+```{r}
+
+inaug_tf_idf %>% 
+  filter(document %in% c("1861-Lincoln", "1933-Roosevelt", "1961-Kennedy", "2009-Obama")) %>% 
+  ggplot(aes(reorder(term,tf_idf), tf_idf, fill = tf_idf)) +
+  geom_col()+
+  coord_flip()+
+  facet_wrap(~document)
+```
+
