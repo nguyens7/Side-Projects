@@ -1323,4 +1323,13 @@ augment(mallet_model, term_counts)
 
 ```
 
-Chapter 7
+# Chapter 7
+```{r}
+library(lubridate)
+library(ggplot2)
+library(dplyr)
+library(readr)
+
+tweets_julia <- read_csv()
+```
+
