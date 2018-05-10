@@ -1,0 +1,23 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(rvest)
+```
+
+```{r}
+
+uspto <- read_html("https://www.uspto.gov/web/offices/ac/ido/oeip/taf/us_stat.htm")
+
+table <- uspto %>% 
+  html_table(fill = TRUE) %>% 
+  .[[1]] %>% 
+  remove_empty_cols()
+
+table
+```
+

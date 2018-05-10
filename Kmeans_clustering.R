@@ -23,7 +23,7 @@ Females <- babynames %>%
 # K means
 set.seed(123)
 km_females <- kmeans(scale(Females), 8, nstart = 25) # 8 clusters, 25 random sets
-km_females
+km_females 
 
 # Make into data frame
 Females_df <- Females %>% 
@@ -80,7 +80,6 @@ cancer_PCA_df %>%
   ggplot(aes(x=PC1, y=PC2, label=id, color=id )) +
   geom_point() +
   geom_text_repel(size = 6)
-
 
 fviz_eig(cancer_PCA)
 
