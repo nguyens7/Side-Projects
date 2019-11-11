@@ -1,0 +1,41 @@
+---
+title: "dbplyr"
+output: html_notebook
+---
+
+```{r}
+library(dplyr)
+library(dbplyr)
+```
+
+```{r}
+con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+copy_to(con, mtcars)
+```
+
+```{r}
+mtcars2 <- tbl(con, "mtcars")
+mtcars2
+```
+
+```{r}
+summary <- mtcars2 %>% 
+  group_by(cyl,am) %>% 
+  summarise(mpg = mean(mpg, na.rm = TRUE) ) %>% 
+  arrange(desc(mpg))
+
+
+summary
+```
+
+```{r}
+summary %>% 
+  show_query()
+```
+
+
+```{r}
+library(tidyverse)
+
+```
+

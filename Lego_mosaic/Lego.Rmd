@@ -1,0 +1,43 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+# devtools::install_github("ryantimpe/brickr")
+
+library(tidyverse)
+library(brickr)
+library(jpeg)
+library(png)
+```
+
+
+```{r}
+mosaic <- readJPEG("Early_placental_structure.jpg") %>% 
+  scale_image(c(160,80)) %>% 
+  legoize() %>% 
+  collect_bricks()
+
+mosaic %>% 
+  display_set()
+```
+
+```{r}
+devtools::install_github("tylermorganwall/rayshader")
+library(rayshader)
+
+mosaic %>% 
+  collect_3d(mosaic_height = 15) %>% 
+  display_3d() %>% 
+  # display_3d(fov=0,theta=-20,phi=30,windowsize=c(1000,800),zoom=0.7) %>% 
+  render_camera(theta = -90, phi = 30,zoom=0.5,fov=130)
+  render_snapshot()
+  rgl::rgl.close()
+  
+  
+# render_snapshot("Placenta.png")
+
+```
+
+
