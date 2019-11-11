@@ -1,0 +1,148 @@
+---
+title: "Sparklyr"
+subtitle: "Master Spark with R"
+output: html_notebook
+---
+# Chapter 2  
+```{r}
+library(sparklyr)
+```
+
+```{r}
+#install local cluster
+# spark_install("2.3")
+```
+
+
+### Connect to spark cluster
+```{r}
+sc <- spark_connect(master = "local", version = "2.3")
+```
+Connection tab in Rstudio should show Spark cluster.
+
+### Copy_to
+
+We can use the `copy_to` function to import the mtcars dataset into our local spark cluster
+```{r}
+cars <- copy_to(sc, mtcars)
+```
+Printing the data from the spark
+```{r}
+cars
+```
+Launch sparklyr web interface  with `spark_web()` command
+```{r}
+spark_web(sc)
+```
+
+SQL queries
+```{r}
+library(DBI)
+dbGetQuery(sc, "SELECT count(*) FROM mtcars")
+```
+dplyr commands
+```{r}
+library(dplyr)
+
+count(cars)
+```
+
+```{r}
+select(cars, hp, mpg) %>%
+  sample_n(100) %>%
+  collect() %>%
+  plot()
+```
+### Modeling
+```{r}
+model <- ml_linear_regression(cars, mpg ~ hp)
+model
+
+```
+
+### Prediction
+```{r}
+model %>%
+  ml_predict(copy_to(sc, data.frame(hp = 250 + 10 * 1:10))) %>%
+  transmute(hp = hp, mpg = prediction) %>%
+  full_join(select(cars, hp, mpg)) %>%
+  collect() %>%
+  plot()
+```
+### Export data as csv
+
+```{r}
+spark_write_csv(cars, "cars.csv")
+```
+
+### Read in local csv
+```{r}
+cars <- spark_read_csv(sc, "cars.csv")
+```
+
+
+### sparklyr extension
+
+One way to deal with nested JSON data is to use extensions with the `sparklyr.nested` package
+
+```{r}
+# install.packages("sparklyr.nested")
+sparklyr.nested::sdf_nest(cars, hp) %>%
+  group_by(cyl) %>%
+  summarise(data = collect_list(data))
+```
+
+
+### Distributed R
+```{r}
+cars %>% spark_apply(~round(.x))
+```
+
+### Streaming
+
+```{r}
+dir.create("input")
+write.csv(mtcars, "input/cars_1.csv", row.names = F)
+```
+
+
+```{r}
+stream <- stream_read_csv(sc, "input/") %>%
+    select(mpg, cyl, disp) %>%
+    stream_write_csv("output/")
+```
+
+```{r}
+dir("output", pattern = ".csv")
+```
+
+```{r}
+# Write more data into the stream source
+write.csv(mtcars, "input/cars_2.csv", row.names = F)
+```
+
+```{r}
+# Check the contents of the stream destination
+dir("output", pattern = ".csv")
+```
+
+```{r}
+stream_stop(stream)
+```
+
+```{r}
+spark_log(sc)
+```
+```{r}
+spark_log(sc, filter = "sparklyr")
+```
+
+
+```{r}
+spark_disconnect(sc)
+
+spark_disconnect_all()
+```
+
+
+
