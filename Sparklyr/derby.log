@@ -1,7 +1,7 @@
 ----------------------------------------------------------------
-Mon Nov 11 14:53:01 EST 2019:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.12.1.1 - (1704137): instance a816c00e-016e-5c06-d11e-00000a0ebb58 
-on database directory memory:/Users/sean/Library/Mobile Documents/com~apple~CloudDocs/R/Side-Projects/Sparklyr/databaseName=metastore_db with class loader org.apache.spark.sql.hive.client.IsolatedClientLoader$$anon$1@7b3005b3 
+Mon Nov 18 11:04:06 EST 2019:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.12.1.1 - (1704137): instance a816c00e-016e-7f41-bfe6-000008356bf8 
+on database directory memory:/Users/sean/Library/Mobile Documents/com~apple~CloudDocs/R/Side-Projects/Sparklyr/databaseName=metastore_db with class loader org.apache.spark.sql.hive.client.IsolatedClientLoader$$anon$1@113ddf0e 
 Loaded from file:/Users/sean/spark/spark-2.3.3-bin-hadoop2.7/jars/derby-10.12.1.1.jar
 java.vendor=Oracle Corporation
 java.runtime.version=1.8.0_101-b13

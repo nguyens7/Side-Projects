@@ -1,7 +1,9 @@
 ---
 title: "Sparklyr"
-subtitle: "Master Spark with R"
-output: html_notebook
+subtitle: Master Spark with R
+output:
+  html_document:
+    df_print: paged
 ---
 # Chapter 2  
 ```{r}
@@ -72,7 +74,7 @@ model %>%
 ### Export data as csv
 
 ```{r}
-spark_write_csv(cars, "cars.csv")
+# spark_write_csv(cars, "cars.csv")
 ```
 
 ### Read in local csv
@@ -143,6 +145,132 @@ spark_disconnect(sc)
 
 spark_disconnect_all()
 ```
+# Chapter 3
+```{r}
+# install.packages("corrr")
+# install.packages("dbplot")
+```
 
+
+```{r}
+library(sparklyr)
+library(dplyr)
+
+sc <- spark_connect(master = "local", version = "2.3")
+```
+
+```{r}
+cars <- copy_to(sc, mtcars)
+```
+
+```{r}
+summarize_all(cars, mean)
+```
+### Generate SQL query
+```{r}
+summarize_all(cars, mean) %>%
+  show_query()
+```
+
+```{r}
+cars %>%
+  mutate(transmission = ifelse(am == 0, "automatic", "manual")) %>%
+  group_by(transmission) %>%
+  summarise_all(mean)
+```
+
+```{r}
+summarise(cars, mpg_percentile = percentile(mpg, 0.25))
+```
+
+```{r}
+summarise(cars, mpg_percentile = percentile(mpg, 0.25)) %>%
+  show_query()
+```
+
+```{r}
+summarise(cars, mpg_percentile = percentile(mpg, array(0.25, 0.5, 0.75)))
+```
+
+```{r}
+summarise(cars, mpg_percentile = percentile(mpg, array(0.25, 0.5, 0.75))) %>%
+  mutate(mpg_percentile = explode(mpg_percentile))
+```
+```{r}
+ml_corr(cars)
+```
+
+```{r}
+library(corrr)
+correlate(cars, use = "pairwise.complete.obs", method = "pearson") 
+```
+
+```{r}
+correlate(cars, use = "pairwise.complete.obs", method = "pearson") %>%
+  shave() %>%
+  rplot()
+```
+```{r}
+library(ggplot2)
+
+ggplot(aes(as.factor(cyl), mpg), data = mtcars) + geom_col()
+```
+```{r}
+car_group <- cars %>%
+  group_by(cyl) %>%
+  summarise(mpg = sum(mpg, na.rm = TRUE)) %>%
+  collect() %>%
+  print()
+
+```
+```{r}
+ggplot(aes(as.factor(cyl), mpg), data = car_group) + 
+  geom_col(fill = "#999999") + coord_flip()
+```
+```{r}
+library(dbplot)
+
+cars %>%
+dbplot_histogram(mpg, binwidth = 3) +
+labs(title = "MPG Distribution",
+     subtitle = "Histogram over miles per gallon")
+```
+
+
+```{r}
+ggplot(aes(mpg, wt), data = mtcars) + 
+  geom_point()
+```
+
+```{r}
+# dbplot_raster(cars, mpg, wt, resolution = 16)
+```
+
+```{r}
+cars %>% 
+  ml_linear_regression(mpg ~ .) %>%
+  summary()
+```
+
+```{r}
+cars %>% 
+  ml_linear_regression(mpg ~ hp + cyl) %>%
+  summary()
+```
+
+```{r}
+cached_cars <- cars %>% 
+  mutate(cyl = paste0("cyl_", cyl)) %>%
+  compute("cached_cars")
+```
+
+```{r}
+cached_cars %>%
+  ml_linear_regression(mpg ~ .) %>%
+  summary()
+```
+```{r}
+spark_disconnect(sc)
+```
 
 
